@@ -4,7 +4,7 @@ import scala.collection.mutable.ListBuffer
 
 import com.typesafe.config.Config
 
-abstract class Router(conf: Config, queues: Array[FlowQueue]) {
+abstract class Router(conf: Config, queues: ListBuffer[FlowQueue]) {
   
   val resourceCount = conf.getInt("simulator.resource.resourceCount")
   

@@ -19,7 +19,7 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
   var currentTime = 0L
   
   private def init(): Unit = {
-    for (evt <- traceGenerator.initTicketTrace()) {
+    for (evt <- traceGenerator.generateTrace()) {
       eventQueue.enqueue(evt)  
     }
   }
@@ -45,7 +45,7 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
       }
     }
     //report the simulation result
-    for (reporter <- Reporter.registeredReporters) {
+    for (reporter <- Reporter.getReporters) {
       reporter.report()
     }
   }
@@ -72,7 +72,8 @@ object Simulator {
     val startTime = conf.getLong("simulator.simulation.startTime")
     val endTime = conf.getLong("simulator.simulation.endTime")
     
-    val traceGenerator = SimulationTraceGenerator("BaseSimulator")
+    val traceGenerator = SimulationTraceGenerator(
+      conf.getString("simulator.simulation.generatorName"), conf)
     
     simulatorInstance = new Simulator(startTime, endTime, traceGenerator)
     simulatorInstance.enqueue(new EndSimulation(endTime))

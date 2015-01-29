@@ -1,15 +1,17 @@
 package simulator
 
+import com.typesafe.config.Config
 import event.Event
 
-class SimulationTraceGenerator {
-  def initTicketTrace(): Seq[Event] = {
-    null
+class SimulationTraceGenerator(conf: Config) {
+  def generateTrace(): Seq[Event] = {
+    Seq[Event]()
   }
 }
 
 object SimulationTraceGenerator {
-  def apply(generatorName: String): SimulationTraceGenerator = generatorName match {
-    case _ => new SimulationTraceGenerator
+  def apply(generatorName: String, conf: Config): SimulationTraceGenerator = generatorName match {
+    case "video" => new VideoTraceGenerator(conf)
+    case _ => new SimulationTraceGenerator(conf)
   }
 }
