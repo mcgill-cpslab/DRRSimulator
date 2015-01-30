@@ -10,7 +10,7 @@ class RouterWithDRR extends Router {
   override val resourceManagers = Seq.fill(Simulator.conf.getInt(
     "simulator.router.resourceManagerNumber"))(
     ResourceManager(resourceManagerName = "DRR",
-      resourceCount = Simulator.conf.getInt("simulator.router.resourceCount")))
+      resourceCount = Simulator.conf.getInt("simulator.resource.resourceCount")))
   
   // TODO: make it more general to handle multi-packets flow
   override def receiveNewFlow(flow: Flow): Unit = {
