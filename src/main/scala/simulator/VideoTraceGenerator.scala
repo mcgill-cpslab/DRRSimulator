@@ -1,26 +1,25 @@
 package simulator
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 import scala.util.Random
 
-import com.typesafe.config.Config
 import entity._
-import event.{SchedulingTick, FlowArrivalEvent, Event}
+import event.{Event, FlowArrivalEvent, SchedulingTick}
 import org.apache.commons.math3.distribution.PoissonDistribution
 
 // the trace generator generate the flow arrival event based on the CC_WEB_VIDEO dataset
 // flow size and poisson arrival pattern
 // NOTE: map each video to a one-packet flow
-class VideoTraceGenerator(conf: Config) extends SimulationTraceGenerator(conf) {
+class VideoTraceGenerator extends SimulationTraceGenerator {
   
   private val sizeBoundaries = new Array[Int](16)
   
   private val probablityBoundaries = new Array[Double](16)
 
-  val mean = conf.getDouble("simulator.Possion.poissonMean")
+  val mean = Simulator.conf.getDouble("simulator.poisson.poissonMean")
   val poissonDis = new PoissonDistribution(mean)
   
-  val cluster = new RouterWithDRR(conf, new ListBuffer[FlowQueue])
+  val cluster = new RouterWithDRR
 
   private def init(): Unit = {
     
@@ -78,14 +77,15 @@ class VideoTraceGenerator(conf: Config) extends SimulationTraceGenerator(conf) {
       val moment = poissonDis.sample()
       val keyframeNum = nextVideoSize()
       val packet = new Packet(keyframeNum)
-      val packetsArray = new Array[Packet](1)
-      packetsArray(0) = packet
-      eventSeq = eventSeq :+ new FlowArrivalEvent(new Flow(packetsArray), cluster, moment)
+      val packetsQueue = new mutable.Queue[Packet]
+      packetsQueue.enqueue(packet)
+      eventSeq = eventSeq :+ new FlowArrivalEvent(new Flow(s"video-$i", packetsQueue), cluster,
+        moment)
     }
     // generate the router scheduling events
-    val startTime = conf.getLong("simulator.simulation.startTime")
-    val endTime = conf.getLong("simulator.simulation.endTime")
-    val schedulingInterval = conf.getLong("simulator.router.schedulingInterval")
+    val startTime = Simulator.conf.getLong("simulator.simulation.startTime")
+    val endTime = Simulator.conf.getLong("simulator.simulation.endTime")
+    val schedulingInterval = Simulator.conf.getLong("simulator.router.schedulingInterval")
     for (i <- startTime until endTime by schedulingInterval) {
       eventSeq = eventSeq :+ new SchedulingTick(cluster, i)
     }

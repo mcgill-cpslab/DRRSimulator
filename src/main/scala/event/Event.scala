@@ -1,6 +1,6 @@
 package event
 
-import entity.{Router, Flow}
+import entity.{ResourceManager, Flow, Router}
 
 class Event(val evtMoment: Long) extends Ordered[Event] {
   override def compare(that: Event): Int = {
@@ -25,3 +25,6 @@ case class FlowArrivalEvent(flow: Flow, router: Router, moment: Long) extends Ev
 case class SchedulingTick(router: Router, moment: Long) extends Event(moment)
 
 case class EndSimulation(moment: Long) extends Event(moment)
+
+case class WaveEnd(resourceManager: ResourceManager, requestId: String, moment: Long)
+  extends Event(moment)

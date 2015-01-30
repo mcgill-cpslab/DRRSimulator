@@ -2,12 +2,17 @@ package entity
 
 import scala.collection.mutable
 
-case class Packet(size: Long)
+import event.WaveEnd
 
-case class Flow(packets: Array[Packet])
+case class Packet(size: Int)
 
-case class FlowQueue(queueName: String, queue: mutable.Queue[Flow])
+case class Flow(id: String, packets: mutable.Queue[Packet])
 
-class ResourceRequest(requester: Flow, requestDemand: Int, var startTime: Long,
-                      var finishTime: Long)
+//requestDemand => cores
+//allocatedResources => cores
+//remainingWorkload => time * cores
+class ResourceRequest(val requester: Flow, var requestDemand: Int, var allocatedResources: Int,
+                      var submitTime: Long, var startTime: Long, var finishTime: Long,
+                      var lastAllocationTime: Long, var waveEndEvent: WaveEnd = null,
+                      var remainingWorkload: Long)
 

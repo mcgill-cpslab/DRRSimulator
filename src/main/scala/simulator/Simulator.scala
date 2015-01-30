@@ -4,8 +4,8 @@ import java.io.File
 
 import scala.collection.mutable
 
-import com.typesafe.config.ConfigFactory
-import event.{SchedulingTick, FlowArrivalEvent, EndSimulation, Event}
+import com.typesafe.config.{Config, ConfigFactory}
+import event._
 import report.Reporter
 
 /**
@@ -29,7 +29,11 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
       event.router.receiveNewFlow(event.flow)
     case schedulingTick: SchedulingTick =>
       schedulingTick.router.scheduleFlow()
-    case event: Event => //nop
+    case endEvent: WaveEnd =>
+      if (endEvent == endEvent.resourceManager.requestQueue(endEvent.requestId).head.waveEndEvent) {
+        endEvent.resourceManager.endRequest(endEvent.requestId)
+      }
+    case _ => //nop
   }
   
   def enqueue(e: Event): Unit = eventQueue.enqueue(e)
@@ -55,7 +59,10 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
 
 object Simulator {
   
-  private var simulatorInstance: Simulator = null 
+  private var simulatorInstance: Simulator = null
+  var conf: Config = null
+  
+  def currentTime: Long = simulatorInstance.currentTime
   
   def enqueue(e: Event): Unit = {
     if (simulatorInstance != null) {
@@ -68,12 +75,12 @@ object Simulator {
       println("Usage: program configuration_path")
       sys.exit(1)
     } 
-    val conf = ConfigFactory.parseFile(new File(args(0)))
+    conf = ConfigFactory.parseFile(new File(args(0)))
     val startTime = conf.getLong("simulator.simulation.startTime")
     val endTime = conf.getLong("simulator.simulation.endTime")
     
     val traceGenerator = SimulationTraceGenerator(
-      conf.getString("simulator.simulation.generatorName"), conf)
+      conf.getString("simulator.simulation.generatorName"))
     
     simulatorInstance = new Simulator(startTime, endTime, traceGenerator)
     simulatorInstance.enqueue(new EndSimulation(endTime))
