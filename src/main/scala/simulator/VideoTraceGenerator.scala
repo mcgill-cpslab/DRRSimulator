@@ -80,7 +80,14 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
     val unitTime = (endTime - startTime) / 12790
     //generate the flow arrival events
     for (i <- 0 until 12790) {
-      val moment = unitTime * (i + 1) + startTime //evenly distribute workload
+      val moment = {
+        if (Simulator.conf.getString("simulator.workloadPattern") == "poisson") {
+          poissonDis.sample()
+        } else {
+          //evenly distribute workload
+          unitTime * (i + 1) + startTime
+        }
+      } 
       val keyframeNum = nextVideoSize()
       val packet = new Packet(keyframeNum)
       val packetsQueue = new mutable.Queue[Packet]
