@@ -96,10 +96,6 @@ class DRRResourceManager(resourceCount: Int,
   
   override def endRequest(request: String): Unit = {
     requestQueue(request).head.finishTime = Simulator.currentTime
-    if (requestQueue(request).head.finishTime < 0) {
-      println("meet the negative time")
-      sys.exit(1)
-    }
     availableResources += requestQueue(request).head.allocatedResources
     requestQueue(request).head.allocatedResources = 0
     allocateResource(None)
