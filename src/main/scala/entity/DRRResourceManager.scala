@@ -65,7 +65,7 @@ class DRRResourceManager(resourceCount: Int,
         val allocateAmount = math.min(
           demandingRequest.requestDemand - demandingRequest.allocatedResources, 1)
         calculateRemainingWorkload(demandingRequest)
-        if (demandingRequest.remainingWorkload <= 0 || allocateAmount <= 1) {
+        if (demandingRequest.remainingWorkload <= 0 || allocateAmount < 1) {
           taskPool.remove(poolPointer)
         } else {
           addResources(demandingRequest, allocateAmount)
