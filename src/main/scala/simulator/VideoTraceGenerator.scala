@@ -98,6 +98,7 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
     for (i <- 0 until 50) {
       val moment = 0
       val keyframeNum = nextVideoSize()
+      println(s"$i => $keyframeNum")
       val packet = new Packet(keyframeNum)
       val packetsQueue = new mutable.Queue[Packet]
       packetsQueue.enqueue(packet)
@@ -108,7 +109,7 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
     val schedulingInterval = Simulator.conf.getLong("simulator.router.schedulingInterval")
     for (i <- startTime until endTime by schedulingInterval) {
       val schedulingTick = new SchedulingTick(cluster, i)
-      println(s"add $schedulingTick")
+      //println(s"add $schedulingTick")
       eventSeq = eventSeq :+ schedulingTick
     }
     println("initialized all events")
