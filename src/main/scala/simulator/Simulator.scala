@@ -39,7 +39,7 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
   def enqueue(e: Event): Unit = eventQueue.enqueue(e)
   
   def run(): Unit = {
-    while (currentTime < endTime) {
+    while (!eventQueue.isEmpty) {
       try {
         val event = eventQueue.dequeue()
         currentTime  = event.evtMoment
