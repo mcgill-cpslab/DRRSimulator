@@ -64,24 +64,22 @@ class DRRResourceManager(resourceCount: Int,
       if (availableResources > 0) {
         val allocateAmount = math.min(
           demandingRequest.requestDemand - demandingRequest.allocatedResources, 1)
-        if (allocateAmount != 0) {
-          calculateRemainingWorkload(demandingRequest)
-          if (demandingRequest.remainingWorkload <= 0) {
+        calculateRemainingWorkload(demandingRequest)
+        if (demandingRequest.remainingWorkload <= 0 || allocateAmount <= 1) {
+          taskPool.remove(poolPointer)
+        } else {
+          addResources(demandingRequest, allocateAmount)
+          //reschedule waveend
+          if (demandingRequest.allocatedResources != 0 && allocateAmount != 0) {
+            rescheduleWaveEnd(demandingRequest)
+          }
+          if (demandingRequest.startTime == -1) {
+            //first time to get resources
+            demandingRequest.startTime = Simulator.currentTime
+          }
+          if (demandingRequest.allocatedResources == demandingRequest.requestDemand ||
+            demandingRequest.allocatedResources == resourceCount) {
             taskPool.remove(poolPointer)
-          } else {
-            addResources(demandingRequest, allocateAmount)
-            //reschedule waveend
-            if (demandingRequest.allocatedResources != 0 && allocateAmount != 0) {
-              rescheduleWaveEnd(demandingRequest)
-            }
-            if (demandingRequest.startTime == -1) {
-              //first time to get resources
-              demandingRequest.startTime = Simulator.currentTime
-            }
-            if (demandingRequest.allocatedResources == demandingRequest.requestDemand ||
-              demandingRequest.allocatedResources == resourceCount) {
-              taskPool.remove(poolPointer)
-            }
           }
         }
         if (poolPointer >= taskPool.size - 1) {
