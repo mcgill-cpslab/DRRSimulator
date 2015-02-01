@@ -107,8 +107,8 @@ class DRRResourceManager(resourceCount: Int,
   private def calculateRemainingWorkload(request: ResourceRequest): Unit = {
     if (request.waveEndEvent != null) {
       val currentSimulationTime = Simulator.currentTime
-      request.remainingWorkload -= (currentSimulationTime - request.lastAllocationTime) *
-        request.allocatedResources
+      request.remainingWorkload -= math.min((currentSimulationTime - request.lastAllocationTime) *
+        request.allocatedResources, request.remainingWorkload)
     }
   }
   

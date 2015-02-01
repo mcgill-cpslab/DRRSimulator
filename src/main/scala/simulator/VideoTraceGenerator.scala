@@ -79,7 +79,7 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
     var eventSeq = Seq[Event]()
     val unitTime = (endTime - startTime) / 12790
     //generate the flow arrival events
-    for (i <- 0 until 12790) {
+    /*for (i <- 0 until 12790) {
       val moment = {
         if (Simulator.conf.getString("simulator.workloadPattern") == "poisson") {
           poissonDis.sample()
@@ -94,12 +94,24 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
       packetsQueue.enqueue(packet)
       eventSeq = eventSeq :+ new FlowArrivalEvent(new Flow(s"video-$i", packetsQueue), cluster,
         moment)
+    }*/
+    for (i <- 0 until 50) {
+      val moment = 0
+      val keyframeNum = nextVideoSize()
+      val packet = new Packet(keyframeNum)
+      val packetsQueue = new mutable.Queue[Packet]
+      packetsQueue.enqueue(packet)
+      eventSeq = eventSeq :+ new FlowArrivalEvent(new Flow(s"video-$i", packetsQueue), cluster,
+        moment)
     }
     // generate the router scheduling events
     val schedulingInterval = Simulator.conf.getLong("simulator.router.schedulingInterval")
     for (i <- startTime until endTime by schedulingInterval) {
-      eventSeq = eventSeq :+ new SchedulingTick(cluster, i)
+      val schedulingTick = new SchedulingTick(cluster, i)
+      println(s"add $schedulingTick")
+      eventSeq = eventSeq :+ schedulingTick
     }
+    println("initialized all events")
     eventSeq
   }
   
