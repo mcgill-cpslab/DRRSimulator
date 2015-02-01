@@ -6,6 +6,7 @@ import scala.util.Random
 import entity._
 import event.{Event, FlowArrivalEvent, SchedulingTick}
 import org.apache.commons.math3.distribution.PoissonDistribution
+import report.Reporter
 
 // the trace generator generate the flow arrival event based on the CC_WEB_VIDEO dataset
 // flow size and poisson arrival pattern
@@ -20,7 +21,7 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
   val poissonDis = new PoissonDistribution(mean)
   
   val cluster = new RouterWithDRR
-
+  
   private def init(): Unit = {
     
     sizeBoundaries(0) = 10

@@ -6,12 +6,12 @@ class Event(val evtMoment: Long) extends Ordered[Event] {
   override def compare(that: Event): Int = {
     //(evtMoment - that.evtMoment).toInt
     if (evtMoment > that.evtMoment) {
-      1
+      -1
     } else {
       if (evtMoment == that.evtMoment) {
         0    
       } else {
-        -1
+        1
       }
     }
   }

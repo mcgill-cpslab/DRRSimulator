@@ -3,6 +3,7 @@ package entity
 import scala.util.Random
 
 import com.typesafe.config.Config
+import report.Reporter
 import simulator.Simulator
 
 class RouterWithDRR extends Router {
@@ -11,6 +12,11 @@ class RouterWithDRR extends Router {
     "simulator.router.resourceManagerNumber"))(
     ResourceManager(resourceManagerName = "DRR",
       resourceCount = Simulator.conf.getInt("simulator.resource.resourceCount")))
+  
+  /* add reporters*/
+  for (resourceManager <- resourceManagers) {
+    Reporter.addReporter(resourceManager)
+  }
   
   // TODO: make it more general to handle multi-packets flow
   override def receiveNewFlow(flow: Flow): Unit = {

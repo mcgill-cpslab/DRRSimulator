@@ -46,6 +46,7 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
         processEvent(event)
       } catch {
         case e: Exception => 
+          e.printStackTrace()
       }
     }
     //report the simulation result

@@ -39,14 +39,17 @@ class DRRResourceManager(resourceCount: Int,
         allocatedQueues += activeQueueID
         deficitsRecords(activeQueueID) -= demand
         allocateResource(Some(requester))
-        requester.submitTime = Simulator.currentTime
       }
     }
     activeList = activeList.filterNot(allocatedQueues.contains)
   }
   
   private def allowToAllocate(activeQueueID: String, demand: Int): Boolean = {
-    demand <= deficitsRecords(activeQueueID)
+    if (Simulator.conf.getBoolean("simulator.drr.enable")) {
+      demand <= deficitsRecords(activeQueueID)
+    } else {
+      true
+    }
   }
 
   //TODO: should be more flexible to support multiple resource allocation policy instead of 
@@ -61,12 +64,20 @@ class DRRResourceManager(resourceCount: Int,
         val allocateAmount = math.min(
           demandingRequest.requestDemand - demandingRequest.allocatedResources,
           availableResources)
-        demandingRequest.allocatedResources += allocateAmount
-        availableResources -= allocateAmount
+        if (demandingRequest.startTime == -1) {
+          //first time to get resources
+          demandingRequest.startTime = Simulator.currentTime
+        }
+        calculateRemainingWorkload(demandingRequest)
+        addResources(demandingRequest, allocateAmount)
         //reschedule waveend
-        rescheduleWaveEnd(demandingRequest)
-        if (demandingRequest.allocatedResources == demandingRequest.requestDemand) {
+        if (demandingRequest.allocatedResources != 0) {
+          rescheduleWaveEnd(demandingRequest)
+        }
+        if (demandingRequest.allocatedResources == demandingRequest.requestDemand || 
+          demandingRequest.allocatedResources == resourceCount) {
           waitingQueue.dequeue()
+          return
         }
       } else {
         return
@@ -74,17 +85,32 @@ class DRRResourceManager(resourceCount: Int,
     }
   }
   
+  private def addResources(request: ResourceRequest, amount: Int): Unit = {
+    request.allocatedResources += amount
+    availableResources -= amount
+  }
+  
   override def endRequest(request: String): Unit = {
     requestQueue(request).head.finishTime = Simulator.currentTime
     availableResources += requestQueue(request).head.allocatedResources
+    requestQueue(request).head.allocatedResources = 0
     allocateResource(None)
+    if (!waitingQueue.isEmpty && waitingQueue.head == requestQueue(request).head) {
+      waitingQueue.dequeue()
+    }
   }
   
-  private def rescheduleWaveEnd(request: ResourceRequest): Unit = {
+  private def calculateRemainingWorkload(request: ResourceRequest): Unit = {
     if (request.waveEndEvent != null) {
       val currentSimulationTime = Simulator.currentTime
       request.remainingWorkload -= (currentSimulationTime - request.lastAllocationTime) *
         request.allocatedResources
+    }
+  }
+  
+  private def rescheduleWaveEnd(request: ResourceRequest): Unit = {
+    if (request.remainingWorkload == 0) {
+      return
     }
     request.waveEndEvent = WaveEnd(this, request.requester.id,
       request.remainingWorkload / request.allocatedResources + Simulator.currentTime)
@@ -92,9 +118,16 @@ class DRRResourceManager(resourceCount: Int,
     Simulator.enqueue(request.waveEndEvent)
   }
   
-  
-
   override def report(): Unit = {
-    
+    var finishedVideoCount = 0
+    for ((queueId, requests) <- requestQueue) {
+      val request = requests.dequeue()
+      if (request.finishTime != -1) {
+        println(s"${request.requester.id} ${request.requestDemand} ${request.submitTime} " +
+          s"${request.startTime} ${request.finishTime}")
+        finishedVideoCount += 1
+      }
+    }
+    println(s"finishedCount = $finishedVideoCount")
   }
 }
