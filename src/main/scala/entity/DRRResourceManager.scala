@@ -15,7 +15,7 @@ class DRRResourceManager(resourceCount: Int,
   var activeList = List[String]()
   val quantum = Simulator.conf.getInt("simulator.drr.quantum")
   
-  private val waitingQueue = new mutable.Queue[ResourceRequest]
+  private var taskPool = new ListBuffer[ResourceRequest]
 
   private var availableResources = resourceCount
   
@@ -57,17 +57,17 @@ class DRRResourceManager(resourceCount: Int,
   private def allocateResource(request: Option[ResourceRequest]): Unit = {
     // scheduling WaveEnd
     // if last wave, update finish time
-    request.foreach(req => waitingQueue.enqueue(req))
-    while (!waitingQueue.isEmpty) {
-      val demandingRequest = waitingQueue.head
+    request.foreach(req => taskPool += req)
+    var poolPointer = 0
+    while (!taskPool.isEmpty) {
+      val demandingRequest = taskPool(poolPointer)
       if (availableResources > 0) {
         val allocateAmount = math.min(
-          demandingRequest.requestDemand - demandingRequest.allocatedResources,
-          availableResources)
+          demandingRequest.requestDemand - demandingRequest.allocatedResources, 1)
         calculateRemainingWorkload(demandingRequest)
         addResources(demandingRequest, allocateAmount)
         //reschedule waveend
-        if (demandingRequest.allocatedResources != 0) {
+        if (demandingRequest.allocatedResources != 0 && allocateAmount != 0) {
           rescheduleWaveEnd(demandingRequest)
         }
         if (demandingRequest.startTime == -1) {
@@ -76,7 +76,12 @@ class DRRResourceManager(resourceCount: Int,
         }
         if (demandingRequest.allocatedResources == demandingRequest.requestDemand ||
           demandingRequest.allocatedResources == resourceCount) {
-          waitingQueue.dequeue()
+          taskPool.remove(poolPointer)
+        }
+        if (poolPointer >= taskPool.size - 1) {
+          poolPointer = 0
+        } else {
+          poolPointer += 1
         }
       } else {
         return
@@ -91,12 +96,16 @@ class DRRResourceManager(resourceCount: Int,
   
   override def endRequest(request: String): Unit = {
     requestQueue(request).head.finishTime = Simulator.currentTime
+    if (requestQueue(request).head.finishTime < 0) {
+      println("meet the negative time")
+      sys.exit(1)
+    }
     availableResources += requestQueue(request).head.allocatedResources
     requestQueue(request).head.allocatedResources = 0
     allocateResource(None)
-    if (!waitingQueue.isEmpty && waitingQueue.head == requestQueue(request).head) {
+    /*if (!waitingQueue.isEmpty && waitingQueue.head == requestQueue(request).head) {
       waitingQueue.dequeue()
-    }
+    }*/
   }
   
   private def calculateRemainingWorkload(request: ResourceRequest): Unit = {
