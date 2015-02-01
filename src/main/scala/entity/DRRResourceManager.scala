@@ -116,8 +116,9 @@ class DRRResourceManager(resourceCount: Int,
     if (request.remainingWorkload == 0) {
       return
     }
-    request.waveEndEvent = WaveEnd(this, request.requester.id,
-      request.remainingWorkload / request.allocatedResources + Simulator.currentTime)
+    val newMoment = request.remainingWorkload / request.allocatedResources + Simulator.currentTime
+    println(s"scheduling ${request.requester.id} at ${Simulator.currentTime} to $newMoment")
+    request.waveEndEvent = WaveEnd(this, request.requester.id, newMoment)
     request.lastAllocationTime = Simulator.currentTime
     Simulator.enqueue(request.waveEndEvent)
   }
