@@ -16,7 +16,7 @@ class DRRResourceManager(resourceCount: Int,
   val quantum = Simulator.conf.getInt("simulator.drr.quantum")
   
   private val waitingQueue = new mutable.Queue[ResourceRequest]
-  
+
   private var availableResources = resourceCount
   
   // decides the moment at which the request is allocated resource and the moments which the request
@@ -64,20 +64,19 @@ class DRRResourceManager(resourceCount: Int,
         val allocateAmount = math.min(
           demandingRequest.requestDemand - demandingRequest.allocatedResources,
           availableResources)
-        if (demandingRequest.startTime == -1) {
-          //first time to get resources
-          demandingRequest.startTime = Simulator.currentTime
-        }
         calculateRemainingWorkload(demandingRequest)
         addResources(demandingRequest, allocateAmount)
         //reschedule waveend
         if (demandingRequest.allocatedResources != 0) {
           rescheduleWaveEnd(demandingRequest)
         }
-        if (demandingRequest.allocatedResources == demandingRequest.requestDemand || 
+        if (demandingRequest.startTime == -1) {
+          //first time to get resources
+          demandingRequest.startTime = Simulator.currentTime
+        }
+        if (demandingRequest.allocatedResources == demandingRequest.requestDemand ||
           demandingRequest.allocatedResources == resourceCount) {
           waitingQueue.dequeue()
-          return
         }
       } else {
         return

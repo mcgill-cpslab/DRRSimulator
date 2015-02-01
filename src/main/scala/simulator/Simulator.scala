@@ -18,6 +18,8 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
   val eventQueue = new mutable.PriorityQueue[Event]
   var currentTime = 0L
   
+  var validEndEvent = 0
+  
   private def init(): Unit = {
     for (evt <- traceGenerator.generateTrace()) {
       eventQueue.enqueue(evt)  
@@ -32,6 +34,7 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
     case endEvent: WaveEnd =>
       if (endEvent == endEvent.resourceManager.requestQueue(endEvent.requestId).head.waveEndEvent) {
         endEvent.resourceManager.endRequest(endEvent.requestId)
+        validEndEvent += 1
       }
     case _ => //nop
   }
@@ -39,7 +42,7 @@ class Simulator(startTime: Long, endTime: Long, traceGenerator: SimulationTraceG
   def enqueue(e: Event): Unit = eventQueue.enqueue(e)
   
   def run(): Unit = {
-    while (currentTime < endTime) {
+    while (currentTime < endTime &&  validEndEvent < 12790) {
       try {
         val event = eventQueue.dequeue()
         currentTime  = event.evtMoment

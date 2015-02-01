@@ -22,6 +22,8 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
   
   val cluster = new RouterWithDRR
   
+  val random = new Random(System.currentTimeMillis())
+  
   private def init(): Unit = {
     
     sizeBoundaries(0) = 10
@@ -61,21 +63,24 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
   }
    
   private def nextVideoSize(): Int = {
-    val seed = Random.nextDouble
+    val seed = random.nextDouble()
     var i = 0
     while (probablityBoundaries(i) < seed) {
       i += 1
     }
     val minimum = if (i != 0) sizeBoundaries(i - 1) else 0
     val maximum = sizeBoundaries(i)
-    Random.nextInt(maximum - minimum + 1) + minimum
+    random.nextInt(maximum - minimum + 1) + minimum
   }
   
   override def generateTrace(): Seq[Event] = {
+    val startTime = Simulator.conf.getLong("simulator.simulation.startTime")
+    val endTime = Simulator.conf.getLong("simulator.simulation.endTime")
     var eventSeq = Seq[Event]()
+    val unitTime = (endTime - startTime) / 12790
     //generate the flow arrival events
     for (i <- 0 until 12790) {
-      val moment = poissonDis.sample()
+      val moment = unitTime * (i + 1) + startTime //evenly distribute workload
       val keyframeNum = nextVideoSize()
       val packet = new Packet(keyframeNum)
       val packetsQueue = new mutable.Queue[Packet]
@@ -84,8 +89,6 @@ class VideoTraceGenerator extends SimulationTraceGenerator {
         moment)
     }
     // generate the router scheduling events
-    val startTime = Simulator.conf.getLong("simulator.simulation.startTime")
-    val endTime = Simulator.conf.getLong("simulator.simulation.endTime")
     val schedulingInterval = Simulator.conf.getLong("simulator.router.schedulingInterval")
     for (i <- startTime until endTime by schedulingInterval) {
       eventSeq = eventSeq :+ new SchedulingTick(cluster, i)
