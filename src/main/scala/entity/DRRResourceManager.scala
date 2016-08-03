@@ -62,6 +62,7 @@ class DRRResourceManager(resourceCount: Int,
     while (!taskPool.isEmpty) {
       val demandingRequest = taskPool(poolPointer)
       if (availableResources > 0) {
+        // this "1" guarantees that we allocate cores to all running videos evenly
         val allocateAmount = math.min(
           demandingRequest.requestDemand - demandingRequest.allocatedResources, 1)
         calculateRemainingWorkload(demandingRequest)
